@@ -10,7 +10,7 @@ from code.classifier.model import WeatherCNN
 # CONFIG
 # -----------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-MODEL_PATH = PROJECT_ROOT / "models" / "weather" / "weather_cnn.pth"
+MODEL_PATH = Path("models/weather/weather_resnet18_ft.pth")
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
