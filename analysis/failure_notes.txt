@@ -1,0 +1,74 @@
+FAILURE ANALYSIS
+
+
+
+*Observed Failure Modes*
+
+
+~Reduced detection confidence in adverse weather
+ In rainy, snowy, and partly cloudy conditions, the object detection model shows reduced confidence scores for correctly detected objects. This leads to missed detections when using a fixed confidence threshold.
+
+~False negatives during low-visibility scenes
+ Night-time and overcast scenes reduce contrast and visibility, causing the detector to miss smaller or distant objects such as bicycles, traffic signs, and riders.
+
+~Overconfidence in clear conditions
+ In clear daylight scenes, a low global confidence threshold increases false positives, especially for visually similar classes like traffic signs and traffic lights.
+
+~Class imbalance sensitivity
+ Rare classes (e.g., traffic_sign, train) suffer from unstable predictions, especially under non-ideal lighting or weather conditions.
+
+
+
+*Root Cause Analysis*
+
+
+~Standard YOLO inference uses a single static confidence threshold, which does not adapt to scene context.
+
+~Weather and lighting significantly alter image statistics (brightness, contrast, noise), but the detector is unaware of these changes.
+
+~Training on large datasets improves general performance but does not eliminate context-specific degradation.
+
+~Increasing overall confidence to reduce false positives worsens recall in adverse conditions.
+
+
+
+*Why Traditional Fixes Are Insufficient*
+
+
+~Simply increasing training epochs does not solve context-dependent failures.
+
+~Data augmentation alone cannot fully represent real-world weather diversity.
+
+~Training separate models per condition increases complexity and deployment cost.
+
+~Post-processing heuristics without context awareness are brittle and inconsistent.
+
+
+
+*System-Level Mitigation Strategy*
+
+
+~The proposed pipeline introduces a weather classification stage before object detection.
+
+~A CNN predicts the current weather condition of the scene.
+
+~The detected weather dynamically controls YOLO’s confidence threshold.
+
+~Lower thresholds are used in adverse conditions to preserve recall.
+
+~Higher thresholds are used in clear conditions to reduce false positives.
+
+~This approach mitigates failures without retraining YOLO or duplicating models.
+
+
+
+*Remaining Limitations*
+
+~Weather classification accuracy is not perfect and may introduce occasional misclassification.
+
+~Threshold adaptation is rule-based and not learned end-to-end.
+
+~Extremely rare classes remain challenging under poor visibility.
+
+
+These limitations are acknowledged and left as future improvement directions.
