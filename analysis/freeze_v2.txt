@@ -1,0 +1,80 @@
+BASELINE FREEZE — v2 
+
+Date: 26 Dec
+
+Status
+
+Weather classifier upgraded to ResNet18 (fine-tuned)
+
+~70–71% validation accuracy
+
+Model saved as weather_resnet18_ft.pth
+
+YOLOv8 detector trained, frozen, and exported to ONNX
+
+End-to-end weather-aware perception pipeline runs successfully
+
+Pipeline output strictly follows the frozen contract
+
+Git repository initialized, clean, and committed
+
+Frozen Components
+
+Pipeline interface (run_pipeline input/output contract)
+
+YOLO detector
+
+No retraining
+
+ONNX model locked
+
+Risk profile logic (rule-based visibility)
+
+Project structure
+
+Allowed Changes (Post-Freeze)
+
+Weather model improvements only if backward compatible
+
+Internal refactoring without changing pipeline outputs
+
+Additional evaluation, logging, or visualization
+
+New models added alongside, not replacing baseline
+
+Rules
+
+No changes to:
+
+Pipeline return format
+
+Key names or data types
+
+Any new model must be explicitly versioned
+
+Baseline v2 must always remain runnable
+
+Technical Anchor
+
+Pipeline entrypoint:
+code/pipeline/main.py
+
+Frozen output contract defined in pipeline docstring
+
+Reference models:
+
+Weather: models/weather/weather_resnet18_ft.pth
+
+Detection: runs/detect/train6/weights/best.onnx
+
+Reason
+
+This freeze preserves a strong, working, end-to-end baseline with:
+
+realistic weather understanding
+
+reliable object detection
+
+reproducible results
+
+safe rollback point for future experimentation

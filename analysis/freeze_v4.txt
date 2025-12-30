@@ -1,0 +1,23 @@
+BASELINE FREEZE — v4
+
+Date: 29 Dec
+
+Status:
+- Weather classifier: ResNet18 fine-tuned (~71% val accuracy)
+- YOLOv8 detector frozen (ONNX)
+- UNet lane segmentation trained on TuSimple
+- UNet integrated non-invasively (internal use only)
+- End-to-end pipeline verified
+- Output contract unchanged
+- Repo clean and reproducible
+
+Rules:
+- No changes to pipeline output schema
+- No YOLO retraining
+- UNet outputs must remain internal unless versioned
+- Weather confidence handling unchanged until calibration phase
+
+Reason:
+This freeze preserves a multi-task perception system
+(weather + detection + lane understanding)
+with strict backward compatibility.

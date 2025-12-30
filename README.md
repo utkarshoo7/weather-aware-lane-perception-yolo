@@ -12,7 +12,7 @@ The pipeline performs:
 The system is designed to study robustness and perception behavior
 in non-ideal environmental conditions.
 
----
+
 
 ## Pipeline Components
 
@@ -33,11 +33,11 @@ in non-ideal environmental conditions.
   qualitative risk profile
 - Design: Replaceable by learning-based fusion later
 
----
+
 
 ## Example Output
 
-```json
+   json
 {
   "weather": {
     "label": "overcast",
