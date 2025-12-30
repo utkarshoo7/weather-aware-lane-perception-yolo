@@ -1,50 +1,51 @@
-"""
-Lane Visibility Metrics (UNet-based)
-
-Quantifies how visible / reliable lanes are.
-Used for risk reasoning (v4+).
-"""
-
 import numpy as np
-from code.unet.infer import predict_lane_mask
-from code.classifier.infer import predict_weather
 
 
-def compute_lane_visibility(image_path: str) -> dict:
-    mask = predict_lane_mask(image_path)
+def compute_lane_metrics(mask: np.ndarray):
+    """
+    mask: binary lane mask (H x W), values {0,1}
+    returns dict of lane visibility metrics
+    """
+    h, w = mask.shape
+    total_pixels = h * w
 
-    total_pixels = mask.size
     lane_pixels = mask.sum()
-
     lane_pixel_ratio = lane_pixels / total_pixels if total_pixels > 0 else 0.0
 
-    h = mask.shape[0]
     bottom_half = mask[h // 2 :, :]
     bottom_half_density = (
         bottom_half.sum() / bottom_half.size if bottom_half.size > 0 else 0.0
     )
 
-    vertical_continuity = (
-        (mask.sum(axis=1) > 0).mean()
-        if mask.shape[0] > 0
-        else 0.0
-    )
+    # vertical continuity: fraction of columns with at least one lane pixel
+    vertical_hits = (mask.sum(axis=0) > 0).sum()
+    vertical_continuity = vertical_hits / w if w > 0 else 0.0
 
-    weather_label, weather_conf = predict_weather(image_path)
+    # final visibility (simple rule)
+    if lane_pixel_ratio > 0.01 and vertical_continuity > 0.3:
+        final_visibility = "high"
+    elif lane_pixel_ratio > 0.003:
+        final_visibility = "medium"
+    else:
+        final_visibility = "low"
 
     return {
-        "weather": weather_label,
-        "weather_confidence": round(weather_conf, 2),
-        "lane_pixel_ratio": round(lane_pixel_ratio, 4),
-        "bottom_half_density": round(bottom_half_density, 4),
-        "vertical_continuity": round(vertical_continuity, 4),
+        "lane_pixel_ratio": float(lane_pixel_ratio),
+        "bottom_half_density": float(bottom_half_density),
+        "vertical_continuity": float(vertical_continuity),
+        "final_visibility": final_visibility,
     }
 
 
-if __name__ == "__main__":
-    img = "results/showcase/00a2e3ca-5c856cde.jpg"
-    metrics = compute_lane_visibility(img)
+def compute_lane_reliability(metrics: dict):
+    """
+    HARD GATE — no ML, no tuning
+    """
+    if (
+        metrics["lane_pixel_ratio"] > 0.01
+        and metrics["bottom_half_density"] > 0.05
+        and metrics["vertical_continuity"] > 0.30
+    ):
+        return "reliable"
 
-    print("\n=== LANE VISIBILITY METRICS ===")
-    for k, v in metrics.items():
-        print(f"{k:22}: {v}")
+    return "unreliable"
