@@ -3,9 +3,17 @@ import numpy as np
 
 def compute_lane_metrics(mask: np.ndarray):
     """
-    mask: binary lane mask (H x W), values {0,1}
-    returns dict of lane visibility metrics
+    Compute simple, rule-based lane visibility metrics.
+
+    NOTE:
+    - UNet is dropped
+    - mask can be empty or zeros
+    - function must ALWAYS exist for imports
     """
+
+    # Ensure binary mask
+    mask = (mask > 0).astype(np.uint8)
+
     h, w = mask.shape
     total_pixels = h * w
 
@@ -17,12 +25,11 @@ def compute_lane_metrics(mask: np.ndarray):
         bottom_half.sum() / bottom_half.size if bottom_half.size > 0 else 0.0
     )
 
-    # vertical continuity: fraction of columns with at least one lane pixel
     vertical_hits = (mask.sum(axis=0) > 0).sum()
     vertical_continuity = vertical_hits / w if w > 0 else 0.0
 
-    # final visibility (simple rule)
-    if lane_pixel_ratio > 0.01 and vertical_continuity > 0.3:
+    # Rule-based visibility
+    if lane_pixel_ratio > 0.01 and vertical_continuity > 0.30:
         final_visibility = "high"
     elif lane_pixel_ratio > 0.003:
         final_visibility = "medium"
@@ -41,6 +48,7 @@ def compute_lane_reliability(metrics: dict):
     """
     HARD GATE — no ML, no tuning
     """
+
     if (
         metrics["lane_pixel_ratio"] > 0.01
         and metrics["bottom_half_density"] > 0.05

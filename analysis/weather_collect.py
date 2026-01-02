@@ -1,5 +1,3 @@
-# analysis/weather_collect.py
-
 from pathlib import Path
 import csv
 
@@ -25,13 +23,13 @@ def main():
         print(f"{gt_label}: {len(images)} images")
 
         for img in images:
-            pred_label, confidence = predict_weather(img)
+            pred_label, confidence = predict_weather(str(img))
 
             rows.append({
                 "image": str(img),
                 "gt_label": gt_label,
                 "pred_label": pred_label,
-                "confidence": float(confidence)
+                "confidence": float(confidence),
             })
 
             total += 1
@@ -41,14 +39,14 @@ def main():
     with open(OUT_FILE, "w", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["image", "gt_label", "pred_label", "confidence"]
+            fieldnames=["image", "gt_label", "pred_label", "confidence"],
         )
         writer.writeheader()
         writer.writerows(rows)
 
     print("\n=== WEATHER CALIBRATION DATA SAVED ===")
-    print(f"Total samples : {total}")
-    print(f"Output file  : {OUT_FILE}")
+    print(f"Samples : {total}")
+    print(f"Output  : {OUT_FILE}")
 
 
 if __name__ == "__main__":

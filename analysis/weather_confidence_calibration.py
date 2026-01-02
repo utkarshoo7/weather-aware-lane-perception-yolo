@@ -1,5 +1,3 @@
-# analysis/weather_confidence_calibration.py
-
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -32,14 +30,13 @@ def main():
 
     ece = compute_ece(confidence, correct, N_BINS)
 
-    print("\n=== WEATHER CONFIDENCE CALIBRATION ===")
-    print(f"Samples : {len(df)}")
-    print(f"ECE     : {ece:.4f}")
-
     out = Path("analysis/weather_ece.txt")
     out.write_text(f"{ece:.6f}")
 
-    print(f"Saved to: {out}")
+    print("\n=== WEATHER CONFIDENCE CALIBRATION ===")
+    print(f"Samples : {len(df)}")
+    print(f"ECE     : {ece:.4f}")
+    print(f"Saved   : {out}")
 
 
 if __name__ == "__main__":

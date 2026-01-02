@@ -10,13 +10,7 @@ N_BINS = 10
 
 
 def main():
-    assert CSV_PATH.exists(), f"Missing {CSV_PATH}"
-
     df = pd.read_csv(CSV_PATH)
-
-    # Required columns
-    required = {"confidence", "gt_label", "pred_label"}
-    assert required.issubset(df.columns), f"Missing columns: {required - set(df.columns)}"
 
     confidences = df["confidence"].values
     correct = (df["gt_label"] == df["pred_label"]).astype(int).values
@@ -36,27 +30,14 @@ def main():
             acc_per_bin.append(correct[mask].mean())
             conf_per_bin.append(confidences[mask].mean())
 
-    # Plot
     plt.figure(figsize=(6, 6))
     plt.plot([0, 1], [0, 1], "k--", label="Perfect Calibration")
-    plt.bar(
-        bin_centers,
-        acc_per_bin,
-        width=0.08,
-        edgecolor="black",
-        alpha=0.7,
-        label="Empirical Accuracy",
-    )
-    plt.plot(
-        bin_centers,
-        conf_per_bin,
-        "ro-",
-        label="Mean Confidence",
-    )
+    plt.bar(bin_centers, acc_per_bin, width=0.08, edgecolor="black", alpha=0.7)
+    plt.plot(bin_centers, conf_per_bin, "ro-", label="Mean Confidence")
 
     plt.xlabel("Confidence")
     plt.ylabel("Accuracy")
-    plt.title("Weather Classifier Reliability Diagram")
+    plt.title("Weather Reliability Diagram")
     plt.legend()
     plt.grid(True)
 
@@ -64,8 +45,7 @@ def main():
     plt.savefig(OUT_PATH)
     plt.close()
 
-    print("\n=== RELIABILITY DIAGRAM SAVED ===")
-    print(f"Output : {OUT_PATH}")
+    print(f"[SAVED] {OUT_PATH}")
 
 
 if __name__ == "__main__":

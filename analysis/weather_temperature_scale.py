@@ -20,27 +20,20 @@ def nll_loss(T, logits, labels):
 
 
 def main():
-    assert CSV_PATH.exists(), "Missing calibration CSV"
-
     df = pd.read_csv(CSV_PATH)
 
-    # Encode labels
     classes = sorted(df["gt_label"].unique())
     class_to_idx = {c: i for i, c in enumerate(classes)}
 
     y_true = df["gt_label"].map(class_to_idx).values
     conf = df["confidence"].values
-
-    # Reconstruct pseudo-logits from confidence
-    # log(p / (1-p)) for predicted class
-    logits = np.zeros((len(conf), len(classes)))
     pred_idx = df["pred_label"].map(class_to_idx).values
 
+    logits = np.zeros((len(conf), len(classes)))
     for i in range(len(conf)):
         p = np.clip(conf[i], 1e-6, 1 - 1e-6)
         logits[i, pred_idx[i]] = np.log(p / (1 - p))
 
-    # Optimize temperature
     res = minimize(
         lambda t: nll_loss(t[0], logits, y_true),
         x0=[1.0],
@@ -50,9 +43,8 @@ def main():
     T = float(res.x[0])
     OUT_PATH.write_text(f"{T:.4f}")
 
-    print("\n=== TEMPERATURE SCALING COMPLETE ===")
-    print(f"Optimal T : {T:.4f}")
-    print(f"Saved to  : {OUT_PATH}")
+    print(f"[OK] Temperature scaling T = {T:.4f}")
+    print(f"[SAVED] {OUT_PATH}")
 
 
 if __name__ == "__main__":

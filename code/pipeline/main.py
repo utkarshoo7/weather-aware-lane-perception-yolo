@@ -1,71 +1,37 @@
-from pathlib import Path
-
 from code.classifier.infer import predict_weather
-from code.detector.infer import detect_objects
-from code.unet.infer import predict_lane_mask
-
-from analysis.lane_visibility_metrics import (
-    compute_lane_metrics,
-    compute_lane_reliability,
-)
+from code.pipeline.lane import predict_lanes
+from code.yolo.infer import run_yolo
 
 
 def run_pipeline(image_path: str):
-    image_path = str(image_path)
-
-    # -------------------------
-    # WEATHER
-    # -------------------------
     weather_label, weather_conf = predict_weather(image_path)
 
-    # -------------------------
-    # OBJECT DETECTION
-    # -------------------------
-    objects = detect_objects(image_path)
+    detections = run_yolo(image_path)
 
-    # -------------------------
-    # LANE SEGMENTATION
-    # -------------------------
-    lane_mask = predict_lane_mask(image_path)
-    lane_metrics = compute_lane_metrics(lane_mask)
-    lane_reliability = compute_lane_reliability(lane_metrics)
+    lane_count = predict_lanes(image_path)
 
-    # -------------------------
-    # RISK PROFILE (SAFE LOGIC)
-    # -------------------------
-    if lane_reliability == "unreliable":
-        visibility = "low"
+    # Simple risk logic
+    if lane_count >= 2 and weather_conf > 0.5:
+        visibility = "high"
+    elif lane_count >= 1:
+        visibility = "medium"
     else:
-        visibility = lane_metrics["final_visibility"]
+        visibility = "low"
 
-    risk_profile = {
-        "visibility": visibility,
-        "weather_confidence": round(float(weather_conf), 2),
-        "num_objects": len(objects),
-    }
-
-    # -------------------------
-    # FINAL OUTPUT
-    # -------------------------
     return {
         "weather": {
             "label": weather_label,
-            "confidence": round(float(weather_conf), 2),
+            "confidence": float(weather_conf),
         },
-        "lane": {
-            "visibility": lane_metrics["final_visibility"],
-            "reliability": lane_reliability,
-            "metrics": lane_metrics,
-        },
-        "objects": objects,
-        "risk_profile": risk_profile,
+        "detections": detections,
+        "lane_count": lane_count,
+        "risk_profile": {
+            "visibility": visibility
+        }
     }
 
 
 if __name__ == "__main__":
-    # quick sanity test
-    test_img = Path("results/showcase/00a2e3ca-5c856cde.jpg")
-    if test_img.exists():
-        out = run_pipeline(str(test_img))
-        print("\n=== FINAL PIPELINE OUTPUT ===")
-        print(out)
+    img = "results/showcase/00a2e3ca-5c856cde.jpg"
+    out = run_pipeline(img)
+    print(out)
