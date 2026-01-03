@@ -1,37 +1,41 @@
+# code/pipeline/main.py
+
 from code.classifier.infer import predict_weather
 from code.pipeline.lane import predict_lanes
-from code.yolo.infer import run_yolo
+from code.pipeline.decision_policy import decide_action_mode
 
+def run_pipeline(image_path: str) -> dict:
+    """
+    Single source of truth for inference output
+    """
 
-def run_pipeline(image_path: str):
-    weather_label, weather_conf = predict_weather(image_path)
+    # Weather
+    weather_out = predict_weather(image_path)
+    weather_label = weather_out["label"]
+    weather_conf = weather_out["confidence"]
 
-    detections = run_yolo(image_path)
+    # Canonical mapping
+    if weather_label == "overcast":
+        weather_label = "clear"
 
-    lane_count = predict_lanes(image_path)
+    # Lanes
+    lanes, lane_visibility = predict_lanes(image_path)
 
-    # Simple risk logic
-    if lane_count >= 2 and weather_conf > 0.5:
-        visibility = "high"
-    elif lane_count >= 1:
-        visibility = "medium"
-    else:
-        visibility = "low"
+    # Decision
+    decision = decide_action_mode(
+        weather=weather_label,
+        confidence=weather_conf,
+        lane_visibility=lane_visibility
+    )
 
     return {
         "weather": {
             "label": weather_label,
-            "confidence": float(weather_conf),
+            "confidence": weather_conf
         },
-        "detections": detections,
-        "lane_count": lane_count,
-        "risk_profile": {
-            "visibility": visibility
-        }
+        "lane": {
+            "count": len(lanes),
+            "visibility": lane_visibility
+        },
+        "decision": decision
     }
-
-
-if __name__ == "__main__":
-    img = "results/showcase/00a2e3ca-5c856cde.jpg"
-    out = run_pipeline(img)
-    print(out)
