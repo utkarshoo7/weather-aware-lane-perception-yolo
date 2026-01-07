@@ -1,39 +1,85 @@
-# code/pipeline/fusion.py
+"""
+Fusion Module
+-------------
+Confidence-aware fusion of weather, lane, and object signals.
 
-def fuse_results(weather, lane_metrics, detections):
+This module does NOT perform learning.
+It applies deterministic safety rules to reconcile
+conflicting perception outputs.
+"""
+
+from typing import Dict, List
+
+# -------------------------
+# TUNABLE SAFETY CONSTANTS
+# -------------------------
+MIN_WEATHER_CONF = 0.50        # Below this, perception is unreliable
+MIN_LANE_RATIO = 0.01          # Minimum visible lane pixels (empirical)
+DEGRADE_ORDER = ["high", "medium", "low"]
+
+
+def _downgrade_visibility(level: str) -> str:
+    """Reduce visibility by one step."""
+    if level not in DEGRADE_ORDER:
+        return "low"
+    idx = DEGRADE_ORDER.index(level)
+    return DEGRADE_ORDER[min(idx + 1, len(DEGRADE_ORDER) - 1)]
+
+
+def fuse_results(
+    weather: Dict,
+    lane_metrics: Dict,
+    detections: List[Dict]
+) -> Dict:
     """
-    Smart confidence-aware fusion logic
+    Fuse weather, lane, and object perception into a
+    final lane visibility assessment.
+
+    Args:
+        weather: {
+            "label": str,
+            "confidence": float
+        }
+        lane_metrics: {
+            "final_visibility": str,
+            "lane_pixel_ratio": float
+        }
+        detections: list of detected objects
+
+    Returns:
+        dict:
+            {
+                "lane_visibility": str,
+                "weather_confidence": float,
+                "lane_ratio": float,
+                "object_count": int
+            }
     """
 
-    label = weather["label"]
-    conf = weather["confidence"]
+    weather_label = weather["label"]
+    weather_conf = float(weather["confidence"])
 
-    lane_vis = lane_metrics["final_visibility"]
-    lane_ratio = lane_metrics["lane_pixel_ratio"]
+    lane_visibility = lane_metrics["final_visibility"]
+    lane_ratio = float(lane_metrics["lane_pixel_ratio"])
 
-    # --- Rule 1: Low weather confidence → downgrade visibility
-    if conf < 0.5:
-        if lane_vis == "high":
-            lane_vis = "medium"
-        elif lane_vis == "medium":
-            lane_vis = "low"
+    # ==================================================
+    # RULE 1: LOW WEATHER CONFIDENCE DEGRADES LANES
+    # ==================================================
+    if weather_conf < MIN_WEATHER_CONF:
+        lane_visibility = _downgrade_visibility(lane_visibility)
 
-    # --- Rule 2: Night is always risky (even with good lanes)
-    if label == "night":
-        lane_vis = "low"
+    # ==================================================
+    # RULE 2: ADVERSE WEATHER + WEAK LANES
+    # ==================================================
+    if weather_label in {"rainy", "snowy"} and lane_ratio < MIN_LANE_RATIO:
+        lane_visibility = "low"
 
-    # --- Rule 3: Rain + weak lanes → low visibility
-    if label == "rainy" and lane_ratio < 0.01:
-        lane_vis = "low"
-
-    # --- Rule 4: Overcast is never “perfect”
-    if label == "overcast" and lane_vis == "high":
-        lane_vis = "medium"
-
-    # --- Final risk profile
+    # ==================================================
+    # FINAL FUSED OUTPUT
+    # ==================================================
     return {
-        "visibility": lane_vis,
-        "weather_confidence": round(conf, 3),
+        "lane_visibility": lane_visibility,
+        "weather_confidence": round(weather_conf, 3),
         "lane_ratio": round(lane_ratio, 4),
         "object_count": len(detections),
     }

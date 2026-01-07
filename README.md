@@ -1,73 +1,170 @@
-# Weather-Aware Perception Pipeline for Autonomous Driving
-
-## Overview
-This project implements an end-to-end computer vision pipeline
-for road-scene understanding under varying weather conditions.
-
-The pipeline performs:
-1. Weather classification from a single road image
-2. Object detection using a YOLO-based detector
-3. Risk-aware fusion of weather and detection outputs
-
-The system is designed to study robustness and perception behavior
-in non-ideal environmental conditions.
+Weather-Aware Lane Perception & Decision Pipeline
 
 
 
-## Pipeline Components
+Overview
 
-### Weather Classifier
-- Architecture: ResNet18
-- Training: Fine-tuned on weather-labeled road images
-- Validation Accuracy: ~70%
-- Output: Weather label + confidence
+This project presents a modular perception and decision pipeline for road scene understanding under varying weather conditions.
+The system integrates weather classification, object detection, lane perception (optionally), and a confidence-aware decision policy, followed by automated failure analysis.
 
-### Object Detector
-- Model: YOLOv8s
-- Format: ONNX (frozen)
-- Task: Multi-class object detection on road scenes
-
-### Fusion Logic
-- Type: Rule-based (intentionally simple)
-- Purpose: Combine weather and object information into a
-  qualitative risk profile
-- Design: Replaceable by learning-based fusion later
+The pipeline is designed for robustness, interpretability, and reproducibility, rather than dataset-specific optimization.
 
 
 
-## Example Output
+Key Capabilities
 
-   json
-{
-  "weather": {
-    "label": "overcast",
-    "confidence": 0.39
-  },
-  "objects": [
-    {"class": "car", "confidence": 0.93}
-  ],
-  "risk_profile": {
-    "visibility": "moderate",
-    "weather_confidence": 0.39,
-    "num_objects": 20
-  }
-}
-
-How to Run
-
-Activate the virtual environment and run:
-
-python -m code.pipeline.main
-
-The pipeline expects a road-scene image path defined inside
-code/pipeline/main.py.
-Project Motivation
-
-Most perception systems are evaluated under ideal conditions.
-This project focuses on understanding perception behavior under
-uncertain and adverse weather scenarios.
-
-The goal is not maximum accuracy, but system-level robustness
-and clean pipeline design.
+Weather classification: clear / rainy / snowy
+Object detection using a lightweight YOLO model
+Lane visibility reasoning (disabled in demo, architecture preserved)
+Deterministic decision policy with confidence gating
+Automated failure and reliability analysis
+Fully offline inference and evaluation
 
 
+Project Structure
+
+Project/
+│
+├── analysis/                  # Evaluation & reporting
+│   ├── decision_debug/
+│   ├── failure_reports/
+│   ├── decision_engine.py
+│   ├── decision_logic.py
+│   ├── decision_visualize.py
+│   └── failure_analysis.py
+│
+├── code/                      # Core pipeline
+│   ├── classifier/            # Weather classification (ResNet-18)
+│   ├── detector/              # Object detection (YOLO)
+│   ├── pipeline/              # Perception + decision logic
+│   ├── unet/                  # Lane segmentation (optional)
+│   ├── utils/
+│   └── yolo/
+│
+├── models/                    # Pretrained weights
+│   ├── weather/
+│   ├── yolo/
+│   └── unet/
+│
+├── results/                   # Outputs & showcase frames
+│   └── showcase/
+│       ├── clear/
+│       ├── rainy/
+│       └── snowy/
+│
+├── external/                  # External dependencies
+│   └── UFLD/
+│
+├── datasets/                  # Demo videos / images
+├── venv/                      # Local virtual environment
+├── README.md
+└── .gitignore
+
+
+
+Models Used
+Component	Model
+Weather classification	ResNet-18 (fine-tuned)
+Object detection	YOLOv8 (lightweight)
+Lane detection	UFLD (architecture preserved)
+Lane segmentation	UNet (optional)
+
+
+Environment Requirements
+
+Python 3.10
+PyTorch
+torchvision
+OpenCV
+NumPy
+Pandas
+ultralytics
+
+
+
+Setup
+1. Create and activate virtual environment
+python -m venv venv
+venv\Scripts\activate
+
+2. Install dependencies
+pip install torch torchvision opencv-python numpy pandas ultralytics addict
+
+Running the Pipeline
+1. Generate decision summaries
+python -m analysis.decision_visualize
+
+
+
+This produces:
+
+analysis/decision_debug/summary.csv
+2. Run failure analysis
+python -m analysis.failure_analysis
+
+
+
+This generates:
+
+analysis/failure_reports/
+├── accuracy_by_weather.csv
+├── low_confidence.csv
+├── misclassified.csv
+└── untrusted_decisions.csv
+
+
+
+Outputs
+
+Per-Frame Outputs
+
+Predicted weather label
+Confidence score
+Decision mode (normal / slow / caution)
+Trust flag (boolean)
+
+Analysis Outputs
+
+Accuracy by weather condition
+Low-confidence predictions
+Untrusted decisions
+Misclassified samples
+
+
+
+Design Principles
+
+Modular architecture — components can be enabled or disabled independently
+Confidence-aware decisions — no blind predictions
+Deterministic logic — reproducible and debuggable
+Failure analysis first — performance evaluated by condition, not averages
+
+
+
+Current Status
+
+Pipeline complete
+Models integrated
+Offline inference stable
+Automated analysis enabled
+Ready for demo, review, and extension
+
+
+Notes
+
+Lane detection is intentionally disabled in the demo pipeline to ensure stability across environments.
+
+All architectural hooks are preserved for future integration.
+
+Training scripts are excluded to keep the repository focused on system design and evaluation.
+
+Author
+Project — Perception & Decision Systems
+
+
+## Demo Notes
+
+- Lane detection is intentionally disabled in the final demo videos
+  to ensure visual stability and clarity.
+- All decisions are generated by the pipeline and logged offline.
+- The demo videos are for visualization purposes only.

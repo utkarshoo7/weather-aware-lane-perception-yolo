@@ -1,51 +1,84 @@
+"""
+YOLO Object Detection (Inference Only)
+-------------------------------------
+Runs object detection using a pretrained YOLOv8 ONNX model.
+The model is loaded once at import time for efficiency.
+"""
+
 from pathlib import Path
+from typing import List, Dict
+
 from ultralytics import YOLO
 
-from code.detector.config import YOLO_MODEL_PATH, IMAGE_SIZE, CONF_THRESHOLD
+from code.detector.config import (
+    YOLO_MODEL_PATH,
+    IMAGE_SIZE,
+    CONF_THRESHOLD,
+)
+
+# ==================================================
+# LOAD MODEL (ONCE)
+# ==================================================
+
+# ONNX model is used strictly for inference (CPU-safe)
+_DETECTOR = YOLO(YOLO_MODEL_PATH)
 
 
-# -----------------------
-# LOAD ONNX MODEL ONCE
-# -----------------------
-_model = YOLO(YOLO_MODEL_PATH)  # ONNX = inference-only
+# ==================================================
+# PUBLIC API
+# ==================================================
 
-
-def detect_objects(image_path: str):
+def detect_objects(image_path: str) -> List[Dict]:
     """
-    Run YOLO object detection on a single image (ONNX).
+    Run object detection on a single image.
+
+    Args:
+        image_path (str): Path to input image.
 
     Returns:
-        List of dicts:
-        [
-            {"class": "car", "confidence": 0.93},
-            {"class": "person", "confidence": 0.81},
-            ...
-        ]
+        List[Dict]: Each detection has:
+            {
+                "class": str,
+                "confidence": float,
+                "bbox": [x1, y1, x2, y2]
+            }
     """
     image_path = Path(image_path)
-    assert image_path.exists(), f"Image not found: {image_path}"
+    if not image_path.exists():
+        raise FileNotFoundError(f"Image not found: {image_path}")
 
-    results = _model.predict(
-        source=image_path,
+    results = _DETECTOR.predict(
+        source=str(image_path),
         imgsz=IMAGE_SIZE,
         conf=CONF_THRESHOLD,
         verbose=False
     )
 
-    detections = []
+    detections: List[Dict] = []
 
     for r in results:
+        if r.boxes is None:
+            continue
+
         for box in r.boxes:
             cls_id = int(box.cls.item())
+            conf = float(box.conf.item())
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+
             detections.append({
-                "class": _model.names[cls_id],
-                "confidence": float(box.conf.item())
+                "class": _DETECTOR.names[cls_id],
+                "confidence": conf,
+                "bbox": [x1, y1, x2, y2],
             })
 
     return detections
 
 
-# Quick sanity test
+# ==================================================
+# OPTIONAL LOCAL TEST
+# ==================================================
 if __name__ == "__main__":
-    out = detect_objects("results/showcase/00a2e3ca-5c856cde.jpg")
-    print(out[:5])
+    sample_img = Path("results/showcase/clear/sample.jpg")
+    if sample_img.exists():
+        preds = detect_objects(str(sample_img))
+        print(preds[:3])

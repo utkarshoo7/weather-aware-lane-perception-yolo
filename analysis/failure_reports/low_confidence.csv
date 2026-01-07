@@ -1,0 +1,3 @@
+image,gt_weather,pred_weather,confidence,lane_visibility,lane_count,trusted,mode,correct
+b0376ecf-07c434f7.jpg,clear,clear,0.3915447294712066,unknown,0,False,caution,True
+b1441e28-1bdefdcc.jpg,clear,rainy,0.3328477144241333,unknown,0,False,caution,False
