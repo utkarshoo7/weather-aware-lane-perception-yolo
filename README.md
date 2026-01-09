@@ -20,25 +20,26 @@ Reproducible demo and evaluation outputs
 
 ## System Architecture
 Input Image / Video
-        │
-        ▼
+        |
+        v
 Weather Classification (ResNet-18)
-        │
-        ├───────────────┐
-        │               │
-        ▼               ▼
-Lane Perception      Object Detection
-(UFLD / UNet)        (YOLOv8)
-        │               │
-        └───────┬───────┘
-                ▼
-      Confidence-Aware Fusion
-                │
-                ▼
-        Decision Policy Layer
-                │
-                ▼
-   Structured Outputs + Analysis
+        |
+        |-------------------|
+        |                   |
+        v                   v
+Lane Perception        Object Detection
+(UFLD / UNet)          (YOLOv8)
+        |                   |
+        |---------+---------|
+                  v
+        Confidence-Aware Fusion
+                  |
+                  v
+          Decision Policy Layer
+                  |
+                  v
+        Structured Outputs + Analysis
+
 
 
 **Note:**
@@ -47,9 +48,7 @@ Detected objects contribute to contextual awareness and fusion logic, while prim
 
 
 Project Structure
-
 Project/
-│
 ├── analysis/                 # Evaluation, visualization, failure analysis
 │   ├── decision_debug/
 │   ├── failure_reports/
@@ -66,18 +65,19 @@ Project/
 │   ├── utils/
 │   └── yolo/
 │
-├── models/                   # Pretrained weights
+├── models/                   # Pretrained weights (ignored in git)
 │   ├── weather/
 │   ├── unet/
 │   └── yolo/
 │
-├── results/                  # Demo outputs (videos )
+├── results/                  # Demo outputs (videos)
+│   └── showcase/
 │
 ├── datasets/                 # Demo videos
 ├── tools/                    # Utility scripts
+├── requirements.txt
 ├── README.md
 └── .gitignore
-
 
 
 ## Models Used
@@ -137,7 +137,6 @@ analysis/failure_reports/
 ├── low_confidence.csv
 ├── misclassified.csv
 └── untrusted_decisions.csv
-
 
 
 Outputs
