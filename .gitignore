@@ -26,6 +26,10 @@ results/temp/
 *.onnx
 *.ckpt
 
+# KEEP demo outputs
+!results/
+!results/showcase/
+
 # Logs
 *.log
 
