@@ -1,7 +1,6 @@
-Weather-Aware Lane Perception and Decision Pipeline
+# Weather-Aware Lane Perception and Decision Pipeline
 
-
-Overview
+## Overview
 
 This project presents an end-to-end perception and decision pipeline for road scene understanding under varying weather conditions.
 The system integrates weather classification, lane perception, object detection, and a confidence-aware decision policy, followed by automated failure analysis.
@@ -9,8 +8,7 @@ The primary objective is to study how environmental uncertainty (clear, rainy, s
 The pipeline runs fully offline, produces structured outputs, and is designed for interpretability, robustness, and evaluation, rather than aggressive optimization.
 
 
-
-Key Capabilities
+## Key Capabilities
 
 Weather classification with confidence estimation
 Lane perception and visibility assessment
@@ -20,7 +18,7 @@ Automated failure and reliability analysis
 Reproducible demo and evaluation outputs
 
 
-System Architecture
+## System Architecture
 Input Image / Video
         │
         ▼
@@ -43,7 +41,7 @@ Lane Perception      Object Detection
    Structured Outputs + Analysis
 
 
-Note:
+**Note:**
 Object detection using YOLOv8 is incorporated as an auxiliary perception module.
 Detected objects contribute to contextual awareness and fusion logic, while primary decision-making is driven by weather confidence and lane visibility.
 
@@ -82,7 +80,7 @@ Project/
 
 
 
-Models Used
+## Models Used
 Component	Model
 Weather Classification	ResNet-18 (fine-tuned)
 Lane Detection	UFLD
@@ -90,6 +88,8 @@ Lane Segmentation	UNet
 Object Detection	YOLOv8
 Decision Policy
 
+
+## Decision Policy
 
 The decision layer is explicit and rule-based, designed for transparency:
 
@@ -104,7 +104,7 @@ Trust flag
 Reason code
 
 
-How to Run
+## How to Run
 1. Create virtual environment
 python -m venv venv
 
