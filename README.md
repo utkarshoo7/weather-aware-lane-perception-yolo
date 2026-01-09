@@ -1,31 +1,58 @@
-Weather-Aware Lane Perception & Decision Pipeline
-
+Weather-Aware Lane Perception and Decision Pipeline
 
 
 Overview
 
-This project presents a modular perception and decision pipeline for road scene understanding under varying weather conditions.
-The system integrates weather classification, object detection, lane perception (optionally), and a confidence-aware decision policy, followed by automated failure analysis.
-
-The pipeline is designed for robustness, interpretability, and reproducibility, rather than dataset-specific optimization.
+This project presents an end-to-end perception and decision pipeline for road scene understanding under varying weather conditions.
+The system integrates weather classification, lane perception, object detection, and a confidence-aware decision policy, followed by automated failure analysis.
+The primary objective is to study how environmental uncertainty (clear, rainy, snowy conditions) affects perception reliability and downstream decision-making.
+The pipeline runs fully offline, produces structured outputs, and is designed for interpretability, robustness, and evaluation, rather than aggressive optimization.
 
 
 
 Key Capabilities
 
-Weather classification: clear / rainy / snowy
-Object detection using a lightweight YOLO model
-Lane visibility reasoning (disabled in demo, architecture preserved)
-Deterministic decision policy with confidence gating
+Weather classification with confidence estimation
+Lane perception and visibility assessment
+Object detection for contextual awareness
+Confidence-aware decision policy
 Automated failure and reliability analysis
-Fully offline inference and evaluation
+Reproducible demo and evaluation outputs
+
+
+System Architecture
+Input Image / Video
+        │
+        ▼
+Weather Classification (ResNet-18)
+        │
+        ├───────────────┐
+        │               │
+        ▼               ▼
+Lane Perception      Object Detection
+(UFLD / UNet)        (YOLOv8)
+        │               │
+        └───────┬───────┘
+                ▼
+      Confidence-Aware Fusion
+                │
+                ▼
+        Decision Policy Layer
+                │
+                ▼
+   Structured Outputs + Analysis
+
+
+Note:
+Object detection using YOLOv8 is incorporated as an auxiliary perception module.
+Detected objects contribute to contextual awareness and fusion logic, while primary decision-making is driven by weather confidence and lane visibility.
 
 
 Project Structure
 
 Project/
 │
-├── analysis/                  # Evaluation & reporting
+├── analysis/                 # Evaluation, visualization, failure analysis
 │   ├── decision_debug/
 │   ├── failure_reports/
 │   ├── decision_engine.py
@@ -33,30 +60,23 @@ Project/
 │   ├── decision_visualize.py
 │   └── failure_analysis.py
 │
-├── code/                      # Core pipeline
-│   ├── classifier/            # Weather classification (ResNet-18)
-│   ├── detector/              # Object detection (YOLO)
-│   ├── pipeline/              # Perception + decision logic
-│   ├── unet/                  # Lane segmentation (optional)
+├── code/                     # Core pipeline
+│   ├── classifier/           # Weather classification
+│   ├── detector/             # Object detection (YOLO)
+│   ├── pipeline/             # Perception + decision logic
+│   ├── unet/                 # Lane segmentation
 │   ├── utils/
 │   └── yolo/
 │
-├── models/                    # Pretrained weights
+├── models/                   # Pretrained weights
 │   ├── weather/
-│   ├── yolo/
-│   └── unet/
+│   ├── unet/
+│   └── yolo/
 │
-├── results/                   # Outputs & showcase frames
-│   └── showcase/
-│       ├── clear/
-│       ├── rainy/
-│       └── snowy/
+├── results/                  # Demo outputs (videos )
 │
-├── external/                  # External dependencies
-│   └── UFLD/
-│
-├── datasets/                  # Demo videos / images
-├── venv/                      # Local virtual environment
+├── datasets/                 # Demo videos
+├── tools/                    # Utility scripts
 ├── README.md
 └── .gitignore
 
@@ -64,47 +84,53 @@ Project/
 
 Models Used
 Component	Model
-Weather classification	ResNet-18 (fine-tuned)
-Object detection	YOLOv8 (lightweight)
-Lane detection	UFLD (architecture preserved)
-Lane segmentation	UNet (optional)
+Weather Classification	ResNet-18 (fine-tuned)
+Lane Detection	UFLD
+Lane Segmentation	UNet
+Object Detection	YOLOv8
+Decision Policy
 
 
-Environment Requirements
+The decision layer is explicit and rule-based, designed for transparency:
 
-Python 3.10
-PyTorch
-torchvision
-OpenCV
-NumPy
-Pandas
-ultralytics
+Low weather confidence → untrusted decisions
+Poor lane visibility → cautious or slow mode
+Adverse weather (rain/snow) → conservative behavior
+Clear conditions with reliable perception → normal mode
+
+Each decision includes:
+Mode (normal, slow, caution)
+Trust flag
+Reason code
 
 
-
-Setup
-1. Create and activate virtual environment
+How to Run
+1. Create virtual environment
 python -m venv venv
+
+2. Activate environment
+
+Windows
+
 venv\Scripts\activate
 
-2. Install dependencies
+3. Install dependencies
 pip install torch torchvision opencv-python numpy pandas ultralytics addict
 
-Running the Pipeline
-1. Generate decision summaries
+4. Run visualization + pipeline
 python -m analysis.decision_visualize
 
 
-
-This produces:
+This generates:
 
 analysis/decision_debug/summary.csv
-2. Run failure analysis
+
+5. Run failure analysis
 python -m analysis.failure_analysis
 
 
 
-This generates:
+Outputs:
 
 analysis/failure_reports/
 ├── accuracy_by_weather.csv
@@ -116,55 +142,58 @@ analysis/failure_reports/
 
 Outputs
 
-Per-Frame Outputs
+Primary Outputs
 
-Predicted weather label
-Confidence score
-Decision mode (normal / slow / caution)
-Trust flag (boolean)
+Predicted weather label with confidence
+Lane visibility assessment
+Decision mode and trust flag
+Annotated demo video
 
 Analysis Outputs
 
 Accuracy by weather condition
+Misclassification cases
 Low-confidence predictions
-Untrusted decisions
-Misclassified samples
+Untrusted decision samples
+
+
+
+Current Performance (Qualitative)
+
+Clear: High reliability
+Rainy: Moderate reliability
+Snowy: Lower reliability (expected due to visual ambiguity)
+
+The system prioritizes robustness and interpretability over raw accuracy.
 
 
 
 Design Principles
 
-Modular architecture — components can be enabled or disabled independently
-Confidence-aware decisions — no blind predictions
-Deterministic logic — reproducible and debuggable
-Failure analysis first — performance evaluated by condition, not averages
+Modular pipeline architecture
+Single source of truth for decisions
+Explicit confidence handling
+Clear separation between inference and analysis
+Reproducible and inspectable outputs
 
 
 
-Current Status
+Status
 
 Pipeline complete
 Models integrated
-Offline inference stable
-Automated analysis enabled
-Ready for demo, review, and extension
+Analysis automated
+Demo outputs generated
+Ready for academic review and presentation
+
 
 
 Notes
 
-Lane detection is intentionally disabled in the demo pipeline to ensure stability across environments.
+Training scripts and experimental code are intentionally excluded
+The project focuses on system integration, not dataset-specific optimization
+Outputs are intended for demonstration and analysis, not real-time deployment
 
-All architectural hooks are preserved for future integration.
-
-Training scripts are excluded to keep the repository focused on system design and evaluation.
 
 Author
-Project — Perception & Decision Systems
-
-
-## Demo Notes
-
-- Lane detection is intentionally disabled in the final demo videos
-  to ensure visual stability and clarity.
-- All decisions are generated by the pipeline and logged offline.
-- The demo videos are for visualization purposes only.
+Utkarsh
